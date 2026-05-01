@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Tool Test — flyagent-js</title>
+  <style>
+    body { font-family: system-ui; max-width: 700px; margin: 40px auto; padding: 20px; }
+    .pass { color: green; }
+    .fail { color: red; }
+    pre { background: #f4f4f4; padding: 10px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <h1>🧪 Browser Tool Tests</h1>
+  <div id="results"></div>
+
+  <script type="module">
+    import { runJavaScript, cookiesRead, localStorageRead, localStorageWrite, domQuery, getPageInfo } from '../dist/index.js';
+
+    const results = document.getElementById('results');
+    const pass = (name, detail) => results.innerHTML += `<div class="pass">✓ ${name}</div><pre>${detail}</pre>`;
+    const fail = (name, err) => results.innerHTML += `<div class="fail">✗ ${name}: ${err}</div>`;
+
+    // Set up some test data
+    localStorage.setItem('test_key', 'hello_from_localstorage');
+    document.cookie = 'test_cookie=hello_from_cookie; path=/';
+
+    // Test 1: runJavaScript simple return
+    try {
+      const r = await runJavaScript.execute({ code: 'return 2 + 2' });
+      console.assert(r === '4', `Expected 4, got ${r}`);
+      pass('runJavaScript: return 2+2', r);
+    } catch (e) { fail('runJavaScript: return 2+2', e); }
+
+    // Test 2: runJavaScript DOM access
+    try {
+      const r = await runJavaScript.execute({ code: 'return document.title' });
+      pass('runJavaScript: document.title', r);
+    } catch (e) { fail('runJavaScript: document.title', e); }
+
+    // Test 3: runJavaScript complex code
+    try {
+      const r = await runJavaScript.execute({ code: `
+        const arr = [1,2,3,4,5];
+        const sum = arr.reduce((a,b) => a+b, 0);
+        return { sum, doubled: arr.map(x => x*2) };
+      `});
+      pass('runJavaScript: complex code', r);
+    } catch (e) { fail('runJavaScript: complex code', e); }
+
+    // Test 4: runJavaScript localStorage access
+    try {
+      const r = await runJavaScript.execute({ code: `
+        return localStorage.getItem('test_key');
+      `});
+      console.assert(r === 'hello_from_localstorage', `Expected hello_from_localstorage, got ${r}`);
+      pass('runJavaScript: read localStorage', r);
+    } catch (e) { fail('runJavaScript: read localStorage', e); }
+
+    // Test 5: runJavaScript error handling
+    try {
+      const r = await runJavaScript.execute({ code: 'throw new Error("oops")' });
+      console.assert(r.includes('Runtime error'), `Expected runtime error, got ${r}`);
+      pass('runJavaScript: error handling', r);
+    } catch (e) { fail('runJavaScript: error handling', e); }
+
+    // Test 6: runJavaScript timeout
+    try {
+      const r = await runJavaScript.execute({ code: 'while(true) {}', timeout: 50 });
+      console.assert(r.includes('timed out'), `Expected timeout, got ${r}`);
+      pass('runJavaScript: timeout', r);
+    } catch (e) { fail('runJavaScript: timeout', e); }
+
+    // Test 7: cookiesRead
+    try {
+      const r = await cookiesRead.execute({});
+      pass('cookiesRead', JSON.stringify(r, null, 2));
+    } catch (e) { fail('cookiesRead', e); }
+
+    // Test 8: localStorageRead
+    try {
+      const r = await localStorageRead.execute({ key: 'test_key' });
+      console.assert(r === 'hello_from_localstorage');
+      pass('localStorageRead', r);
+    } catch (e) { fail('localStorageRead', e); }
+
+    // Test 9: domQuery
+    try {
+      const r = await domQuery.execute({ selector: 'h1', mode: 'text' });
+      pass('domQuery', r);
+    } catch (e) { fail('domQuery', e); }
+
+    // Test 10: getPageInfo
+    try {
+      const r = await getPageInfo.execute({});
+      pass('getPageInfo', JSON.stringify(r, null, 2));
+    } catch (e) { fail('getPageInfo', e); }
+
+    results.innerHTML += '<h3 class="pass">All tests completed!</h3>';
+  </script>
+</body>
+</html>
