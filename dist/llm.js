@@ -6,6 +6,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OpenAIClient = void 0;
 exports.detectProvider = detectProvider;
+exports.streamChat = streamChat;
 /** Detect provider from model name. */
 function detectProvider(model) {
     const m = model.toLowerCase();
@@ -16,6 +17,127 @@ function detectProvider(model) {
     if (m.startsWith("moonshot"))
         return "kimi";
     return "openai";
+}
+async function* streamChat(config, messages, tools, jsonOutput = false) {
+    const baseURL = config.baseURL || "https://api.openai.com/v1";
+    const url = `${baseURL}/chat/completions`;
+    const body = {
+        model: config.model,
+        messages: messages.map((m) => toOpenAIMessage(m)),
+        temperature: config.temperature ?? 0.7,
+        max_tokens: config.maxTokens ?? 4096,
+        stream: true,
+    };
+    if (tools && tools.length > 0) {
+        body.tools = tools.map((t) => ({
+            type: "function",
+            function: {
+                name: t.name,
+                description: t.description,
+                parameters: t.parameters,
+            },
+        }));
+        body.tool_choice = "auto";
+    }
+    if (jsonOutput && !tools) {
+        body.response_format = { type: "json_object" };
+    }
+    const resp = await fetch(url, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${config.apiKey}`,
+        },
+        body: JSON.stringify(body),
+    });
+    if (!resp.ok) {
+        const text = await resp.text();
+        throw new Error(`LLM API error ${resp.status}: ${text}`);
+    }
+    const reader = resp.body?.getReader();
+    if (!reader)
+        throw new Error("No response body");
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let currentToolCalls = [];
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done)
+            break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed || trimmed === "data: [DONE]")
+                continue;
+            if (!trimmed.startsWith("data: "))
+                continue;
+            try {
+                const data = JSON.parse(trimmed.slice(6));
+                const delta = data.choices?.[0]?.delta;
+                if (!delta)
+                    continue;
+                const content = delta.content || "";
+                // Accumulate tool calls from stream
+                if (delta.tool_calls) {
+                    for (const tc of delta.tool_calls) {
+                        const index = tc.index ?? 0;
+                        if (!currentToolCalls[index]) {
+                            currentToolCalls[index] = {
+                                id: tc.id || "",
+                                type: "function",
+                                function: { name: "", arguments: "" },
+                            };
+                        }
+                        if (tc.function?.name)
+                            currentToolCalls[index].function.name += tc.function.name;
+                        if (tc.function?.arguments)
+                            currentToolCalls[index].function.arguments += tc.function.arguments;
+                    }
+                }
+                const finishReason = data.choices?.[0]?.finish_reason;
+                yield {
+                    content,
+                    tool_calls: finishReason ? currentToolCalls.filter(Boolean) : undefined,
+                    finish_reason: finishReason,
+                };
+                if (finishReason) {
+                    currentToolCalls = [];
+                }
+            }
+            catch {
+                // Ignore malformed SSE lines
+            }
+        }
+    }
+}
+function toOpenAIMessage(msg) {
+    if (msg.role === "tool") {
+        return {
+            role: "tool",
+            tool_call_id: msg.tool_call_id,
+            content: typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content),
+        };
+    }
+    if (msg.role === "assistant" && msg.tool_calls) {
+        return {
+            role: "assistant",
+            content: msg.content || "",
+            tool_calls: msg.tool_calls.map((tc) => ({
+                id: tc.id,
+                type: "function",
+                function: {
+                    name: tc.function.name,
+                    arguments: typeof tc.function.arguments === "string" ? tc.function.arguments : JSON.stringify(tc.function.arguments),
+                },
+            })),
+        };
+    }
+    if (Array.isArray(msg.content)) {
+        return { role: msg.role, content: msg.content };
+    }
+    return { role: msg.role, content: msg.content };
 }
 function isVisionModel(model) {
     return model.includes("gpt-4o") || model.includes("claude-3");

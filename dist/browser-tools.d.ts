@@ -31,6 +31,16 @@ export declare const localStorageRead: import("./tool.js").ToolDef;
 export declare const localStorageWrite: import("./tool.js").ToolDef;
 /** List all localStorage keys. */
 export declare const localStorageList: import("./tool.js").ToolDef;
+/** Capture the screen or a specific application window. */
+export declare const screenCapture: import("./tool.js").ToolDef;
+/** Continuous speech recognition. */
+export declare const speechRecognition: import("./tool.js").ToolDef;
+/** Read from IndexedDB. */
+export declare const indexedDBRead: import("./tool.js").ToolDef;
+/** Write to IndexedDB. */
+export declare const indexedDBWrite: import("./tool.js").ToolDef;
+/** List all keys in an IndexedDB store. */
+export declare const indexedDBList: import("./tool.js").ToolDef;
 /** Read all browser cookies for the current page. */
 export declare const cookiesRead: import("./tool.js").ToolDef;
 /**

@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FlyAgent Browser Demo — Agent runs entirely in your browser</title>
   <style>
-    :root { --primary: #007bff; --danger: #dc3545; --success: #28a745; --gray: #6c757d; }
-    body { font-family: system-ui, -apple-system, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; line-height: 1.6; color: #333; }
+    :root { --primary: #007bff; --danger: #dc3545; --success: #28a745; --gray: #6c757d; --warn: #ffc107; }
+    body { font-family: system-ui, -apple-system, sans-serif; max-width: 960px; margin: 0 auto; padding: 20px; line-height: 1.6; color: #333; }
     h1 { font-size: 1.8rem; margin-bottom: 0.3rem; }
     .subtitle { color: var(--gray); font-size: 0.95rem; margin-bottom: 20px; }
     .card { border: 1px solid #ddd; border-radius: 10px; padding: 20px; margin: 16px 0; background: #fafafa; }
@@ -14,35 +14,42 @@
     label { display: block; font-weight: 600; margin: 12px 0 4px; font-size: 0.9rem; }
     input, textarea, select { font-family: inherit; font-size: 15px; padding: 10px 12px; border-radius: 6px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; }
     input:focus, textarea:focus, select:focus { outline: none; border-color: var(--primary); }
-    button { font-family: inherit; font-size: 15px; padding: 10px 18px; border-radius: 6px; border: none; cursor: pointer; background: var(--primary); color: white; margin-right: 8px; }
+    button { font-family: inherit; font-size: 15px; padding: 10px 18px; border-radius: 6px; border: none; cursor: pointer; background: var(--primary); color: white; margin-right: 8px; margin-bottom: 6px; }
     button:hover { opacity: 0.9; }
     button:disabled { background: #ccc; cursor: not-allowed; }
     button.secondary { background: var(--gray); }
+    button.warn { background: var(--warn); color: #333; }
     .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; background: #e9ecef; color: #495057; margin-right: 6px; }
     .badge.purple { background: #e0d4f7; color: #5a3d8a; }
     .badge.green { background: #d4edda; color: #155724; }
     .badge.orange { background: #ffe5cc; color: #804000; }
     #output { background: #f4f4f4; padding: 16px; border-radius: 8px; min-height: 120px; font-family: ui-monospace, SFMono-Regular, monospace; font-size: 13px; line-height: 1.5; }
     .event { padding: 3px 0; }
+    .event.token { color: #333; }
     .event.tool { color: #b8860b; }
     .event.done { color: var(--success); }
     .event.error { color: var(--danger); font-weight: 600; }
     .event.reasoning { color: var(--gray); font-style: italic; }
     .event.result { color: #333; background: #fff; padding: 8px; border-radius: 4px; margin-top: 4px; border-left: 3px solid var(--primary); }
+    .event.metrics { color: var(--gray); font-size: 0.85rem; }
     .preset { cursor: pointer; padding: 6px 10px; border-radius: 4px; border: 1px solid #ddd; background: white; font-size: 0.85rem; margin: 4px 4px 0 0; display: inline-block; }
     .preset:hover { background: #f0f0f0; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
     .tool-list { font-size: 0.85rem; }
     .tool-list li { margin: 4px 0; }
+    #metricsBar { font-size: 0.8rem; color: var(--gray); padding: 8px 0; border-bottom: 1px solid #eee; margin-bottom: 8px; }
+    .token-stream { display: inline; }
   </style>
 </head>
 <body>
   <h1>🚀 FlyAgent Browser Demo</h1>
   <p class="subtitle">
-    The agent runs <strong>entirely in your browser</strong> — no backend server, no data leaves your machine except to the LLM API.
+    The agent runs <strong>entirely in your browser</strong> — no backend server.
     <span class="badge purple">Zero Backend</span>
     <span class="badge green">Privacy First</span>
-    <span class="badge orange">20+ Browser Tools</span>
+    <span class="badge orange">28 Browser Tools</span>
+    <span class="badge" style="background:#cce5ff;color:#004085;">SSE Streaming</span>
+    <span class="badge" style="background:#d1ecf1;color:#0c5460;">Persistent Memory</span>
   </p>
 
   <!-- Setup -->
@@ -57,7 +64,15 @@
 
     <label>API Key</label>
     <input type="password" id="apiKey" placeholder="sk-... or your provider key" />
-    <p style="font-size:0.8rem;color:var(--gray);margin:4px 0 0;">
+
+    <label style="margin-top:12px;">
+      <input type="checkbox" id="enableStreaming" checked /> Enable token streaming (see words appear in real-time)
+    </label>
+    <label>
+      <input type="checkbox" id="enableMemory" checked /> Enable persistent memory (survives page reload)
+    </label>
+
+    <p style="font-size:0.8rem;color:var(--gray);margin:8px 0 0;">
       Key is only sent to the LLM provider you selected. Never stored.
     </p>
   </div>
@@ -71,6 +86,8 @@
       <span class="preset" onclick="setTask('Query all h1 and h2 tags and summarize what this page is about')">Page summary</span>
       <span class="preset" onclick="setTask('Read my clipboard and tell me what is there')">Read clipboard</span>
       <span class="preset" onclick="setTask('Take a photo with my camera and describe what you see')">Camera photo</span>
+      <span class="preset" onclick="setTask('Capture my screen and describe what I am looking at')">Screen capture</span>
+      <span class="preset" onclick="setTask('Listen to my voice and transcribe what I say')">Voice → text</span>
       <span class="preset" onclick="setTask('Get my GPS location and tell me what city I am probably in')">My location</span>
       <span class="preset" onclick="setTask('Fetch https://api.github.com and tell me the current rate limit status')">API fetch</span>
       <span class="preset" onclick="setTask('List everything in my localStorage and summarize the stored data')">localStorage</span>
@@ -78,6 +95,7 @@
       <span class="preset" onclick="setTask('Get my device info and tell me about my hardware')">Device info</span>
       <span class="preset" onclick="setTask('Run JavaScript to find all links on this page and list their URLs')">JS: list links</span>
       <span class="preset" onclick="setTask('Read my cookies and tell me what websites remember about me')">Read cookies</span>
+      <span class="preset" onclick="setTask('Write code to count all images on this page and report their total dimensions')">JS: count images</span>
     </div>
   </div>
 
@@ -85,11 +103,13 @@
   <div>
     <button id="runBtn" onclick="runAgent()">▶ Run Agent</button>
     <button class="secondary" onclick="clearOutput()">Clear</button>
+    <button class="warn" onclick="resetAgent()">Reset Session</button>
   </div>
 
   <!-- Output -->
   <div class="card">
     <h3>📤 Output</h3>
+    <div id="metricsBar"></div>
     <div id="output"><em>Waiting for task...</em></div>
   </div>
 
@@ -100,11 +120,11 @@
       <div>
         <strong>DOM</strong>
         <ul>
-          <li><code>domQuery</code> — Query elements</li>
-          <li><code>domClick</code> — Click elements</li>
-          <li><code>domScroll</code> — Scroll to element</li>
-          <li><code>domSet</code> — Modify elements</li>
-          <li><code>getPageInfo</code> — Page metadata</li>
+          <li><code>domQuery</code></li>
+          <li><code>domClick</code></li>
+          <li><code>domScroll</code></li>
+          <li><code>domSet</code></li>
+          <li><code>getPageInfo</code></li>
         </ul>
       </div>
       <div>
@@ -114,18 +134,29 @@
           <li><code>localStorageWrite</code></li>
           <li><code>localStorageList</code></li>
           <li><code>cookiesRead</code></li>
+          <li><code>indexedDBRead</code></li>
+          <li><code>indexedDBWrite</code></li>
+          <li><code>indexedDBList</code></li>
         </ul>
       </div>
       <div>
         <strong>Code Execution</strong>
         <ul>
-          <li><code>runJavaScript</code> — Execute any JS in browser</li>
+          <li><code>runJavaScript</code></li>
+        </ul>
+      </div>
+      <div>
+        <strong>Capture</strong>
+        <ul>
+          <li><code>cameraCapture</code></li>
+          <li><code>screenCapture</code> ← new</li>
+          <li><code>speechRecognition</code> ← new</li>
         </ul>
       </div>
       <div>
         <strong>Network</strong>
         <ul>
-          <li><code>httpFetch</code> — HTTP requests</li>
+          <li><code>httpFetch</code></li>
         </ul>
       </div>
       <div>
@@ -133,9 +164,8 @@
         <ul>
           <li><code>clipboardRead</code></li>
           <li><code>clipboardWrite</code></li>
-          <li><code>cameraCapture</code></li>
           <li><code>getGeolocation</code></li>
-          <li><code>speak</code> — Text-to-speech</li>
+          <li><code>speak</code></li>
         </ul>
       </div>
       <div>
@@ -152,7 +182,10 @@
   </div>
 
   <script type="module">
-    import { Agent, allBrowserTools } from '../dist/index.js';
+    import { Agent, allBrowserTools, AgentMemory } from '../dist/index.js';
+
+    const memory = new AgentMemory("demo");
+    let agent = null;
 
     window.setTask = (text) => {
       document.getElementById('task').value = text;
@@ -160,63 +193,129 @@
 
     window.clearOutput = () => {
       document.getElementById('output').innerHTML = '<em>Waiting for task...</em>';
+      document.getElementById('metricsBar').textContent = '';
+    };
+
+    window.resetAgent = async () => {
+      if (agent) agent.reset();
+      await memory.delete("default");
+      window.clearOutput();
+      document.getElementById('output').innerHTML = '<em>Session reset. Start a new conversation.</em>';
     };
 
     window.runAgent = async () => {
       const apiKey = document.getElementById('apiKey').value.trim();
       const task = document.getElementById('task').value.trim();
       const provider = document.getElementById('provider').value;
+      const enableStreaming = document.getElementById('enableStreaming').checked;
+      const enableMemory = document.getElementById('enableMemory').checked;
       const output = document.getElementById('output');
+      const metricsBar = document.getElementById('metricsBar');
       const btn = document.getElementById('runBtn');
 
       if (!apiKey) { output.innerHTML = '<span class="event error">Please enter an API key.</span>'; return; }
       if (!task) { output.innerHTML = '<span class="event error">Please enter a task.</span>'; return; }
 
-      // Pick model based on provider
       const modelMap = { openai: 'gpt-4o-mini', gemini: 'gemini-1.5-pro', kimi: 'moonshot-v1-8k' };
       const model = modelMap[provider];
 
       btn.disabled = true;
       output.innerHTML = '';
 
-      const agent = new Agent({
-        model,
-        apiKey,
-        tools: allBrowserTools,
-        system:
-          "You are a browser automation assistant with access to the user's device. " +
-          "Use the available tools to interact with the webpage, read data, capture media, " +
-          "and accomplish the user's goal. Be concise and action-oriented.",
-        maxIterations: 15,
-      });
+      // Reuse or create agent
+      if (!agent) {
+        agent = new Agent({
+          model,
+          apiKey,
+          tools: allBrowserTools,
+          system:
+            "You are a browser automation assistant with access to the user's device. " +
+            "Use the available tools to interact with the webpage, read data, capture media, " +
+            "and accomplish the user's goal. Be concise and action-oriented.",
+          maxIterations: 15,
+          enableStreaming,
+          memory: enableMemory ? memory : undefined,
+          broadcast: true,
+        });
+
+        // Load previous session if exists
+        if (enableMemory) {
+          const loaded = await agent.loadSession("default");
+          if (loaded) {
+            const line = document.createElement('div');
+            line.className = 'event';
+            line.style.color = 'var(--gray)';
+            line.textContent = '💾 Previous session loaded from IndexedDB.';
+            output.appendChild(line);
+          }
+        }
+      } else {
+        // Update settings
+        agent = new Agent({
+          model,
+          apiKey,
+          tools: allBrowserTools,
+          system: agent.system,
+          maxIterations: 15,
+          enableStreaming,
+          memory: enableMemory ? memory : undefined,
+          broadcast: true,
+        });
+        // Carry over messages if same session
+        if (enableMemory) await agent.loadSession("default");
+      }
+
+      let currentTokenLine = null;
 
       try {
         for await (const event of agent.stream(task)) {
-          const line = document.createElement('div');
-          line.className = 'event';
+          if (event.type === 'token') {
+            // Stream tokens inline
+            if (!currentTokenLine) {
+              currentTokenLine = document.createElement('div');
+              currentTokenLine.className = 'event token';
+              output.appendChild(currentTokenLine);
+            }
+            const span = document.createElement('span');
+            span.className = 'token-stream';
+            span.textContent = event.text;
+            currentTokenLine.appendChild(span);
+            currentTokenLine.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          } else {
+            // Non-token events start a new line
+            currentTokenLine = null;
 
-          if (event.type === 'reasoning') {
-            line.className += ' reasoning';
-            line.textContent = `💭 ${event.text?.slice(0, 120)}${event.text?.length > 120 ? '...' : ''}`;
-          } else if (event.type === 'tool_start') {
-            line.className += ' tool';
-            const input = JSON.stringify(event.input).slice(0, 100);
-            line.textContent = `🔧 ${event.tool}(${input})`;
-          } else if (event.type === 'tool_done') {
-            line.className += ' done';
-            line.textContent = event.error
-              ? `✗ ${event.tool}: ${event.error}`
-              : `✓ ${event.tool}: ${event.output?.slice(0, 120) || 'done'}`;
-          } else if (event.type === 'result') {
-            line.className += ' result';
-            line.innerHTML = `<strong>Result:</strong> ${event.text}`;
-          } else if (event.type === 'error') {
-            line.className += ' error';
-            line.textContent = `Error: ${event.error}`;
+            const line = document.createElement('div');
+            line.className = 'event';
+
+            if (event.type === 'reasoning') {
+              line.className += ' reasoning';
+              line.textContent = `💭 ${event.text?.slice(0, 120)}${event.text?.length > 120 ? '...' : ''}`;
+            } else if (event.type === 'tool_start') {
+              line.className += ' tool';
+              const input = JSON.stringify(event.input).slice(0, 100);
+              line.textContent = `🔧 ${event.tool}(${input})`;
+            } else if (event.type === 'tool_done') {
+              line.className += ' done';
+              line.textContent = event.error
+                ? `✗ ${event.tool}: ${event.error}`
+                : `✓ ${event.tool}: ${event.output?.slice(0, 120) || 'done'}`;
+            } else if (event.type === 'result') {
+              line.className += ' result';
+              line.innerHTML = `<strong>Result:</strong> ${event.text}`;
+            } else if (event.type === 'metrics') {
+              line.className += ' metrics';
+              const m = event.metrics;
+              metricsBar.textContent = `Calls: ${m.llmCalls} | Tools: ${m.toolCalls} | Tokens: ${m.totalTokens} | Cost: ~$${m.estimatedCost.toFixed(4)} | Latency: ${m.totalLatencyMs.toFixed(0)}ms`;
+              continue; // Don't append to output
+            } else if (event.type === 'error') {
+              line.className += ' error';
+              line.textContent = `Error: ${event.error}`;
+            }
+
+            output.appendChild(line);
+            line.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           }
-
-          output.appendChild(line);
-          line.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
       } catch (e) {
         const line = document.createElement('div');

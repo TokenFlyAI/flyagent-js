@@ -30,7 +30,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.OpenAIClient = exports.JS = exports.tool = exports.Agent = void 0;
+exports.AgentMemory = exports.OpenAIClient = exports.JS = exports.tool = exports.Agent = void 0;
 var agent_js_1 = require("./agent.js");
 Object.defineProperty(exports, "Agent", { enumerable: true, get: function () { return agent_js_1.Agent; } });
 var tool_js_1 = require("./tool.js");
@@ -38,5 +38,7 @@ Object.defineProperty(exports, "tool", { enumerable: true, get: function () { re
 Object.defineProperty(exports, "JS", { enumerable: true, get: function () { return tool_js_1.JS; } });
 var llm_js_1 = require("./llm.js");
 Object.defineProperty(exports, "OpenAIClient", { enumerable: true, get: function () { return llm_js_1.OpenAIClient; } });
+var memory_js_1 = require("./memory.js");
+Object.defineProperty(exports, "AgentMemory", { enumerable: true, get: function () { return memory_js_1.AgentMemory; } });
 // Re-export all browser tools for convenience
 __exportStar(require("./browser-tools.js"), exports);

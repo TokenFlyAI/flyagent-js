@@ -27,7 +27,7 @@ export interface ToolCall {
 }
 export interface LLMResponse {
     content: string;
-    tool_calls: ToolCall[];
+    tool_calls?: ToolCall[];
     usage?: {
         prompt_tokens: number;
         completion_tokens: number;
@@ -42,6 +42,16 @@ export interface LLMConfig {
 }
 /** Detect provider from model name. */
 export declare function detectProvider(model: string): "openai" | "anthropic" | "gemini" | "kimi";
+export interface StreamChunk {
+    content: string;
+    tool_calls?: ToolCall[];
+    finish_reason?: string;
+}
+export declare function streamChat(config: LLMConfig, messages: DialogMessage[], tools?: {
+    name: string;
+    description: string;
+    parameters: JSONSchema;
+}[], jsonOutput?: boolean): AsyncGenerator<StreamChunk, void, unknown>;
 export declare class OpenAIClient {
     private config;
     constructor(config: LLMConfig);

@@ -190,6 +190,193 @@ export const localStorageList = tool({
   },
 });
 
+/** Capture the screen or a specific application window. */
+export const screenCapture = tool({
+  name: "screenCapture",
+  description:
+    "Capture a screenshot of the user's screen, a specific window, or a browser tab. " +
+    "The user will be prompted to select what to share. Returns a base64 data URL.",
+  parameters: JS.object({
+    displaySurface: JS.string("What to capture: 'monitor' (full screen) | 'window' | 'browser'. Default: monitor"),
+  }),
+  execute: async ({ displaySurface = "monitor" }) => {
+    try {
+      const stream = await (navigator.mediaDevices as any).getDisplayMedia({
+        video: { displaySurface: displaySurface as any },
+        audio: false,
+      });
+      const video = document.createElement("video");
+      video.srcObject = stream;
+      await video.play();
+
+      // Wait a frame for the video to render
+      await new Promise((r) => setTimeout(r, 500));
+
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      ctx?.drawImage(video, 0, 0);
+
+      stream.getTracks().forEach((t: MediaStreamTrack) => t.stop());
+
+      return canvas.toDataURL("image/png");
+    } catch (e) {
+      return `Screen capture failed: ${String(e)}`;
+    }
+  },
+});
+
+/** Continuous speech recognition. */
+export const speechRecognition = tool({
+  name: "speechRecognition",
+  description:
+    "Listen to the user's voice and transcribe speech to text. " +
+    "The user must grant microphone permission. " +
+    "Listens for a single utterance and returns the transcript.",
+  parameters: JS.object({
+    lang: JS.string("Language code, e.g., 'en-US', 'zh-CN'. Default: browser language"),
+    maxDuration: JS.integer("Max listening duration in seconds (default: 30)"),
+  }),
+  execute: async ({ lang, maxDuration = 30 }) => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return "Speech recognition not supported in this browser.";
+
+    return new Promise((resolve) => {
+      const rec = new SpeechRecognition();
+      rec.lang = lang || navigator.language;
+      rec.continuous = false;
+      rec.interimResults = false;
+
+      const timeout = setTimeout(() => {
+        rec.stop();
+        resolve("Speech recognition timed out. No speech detected.");
+      }, maxDuration * 1000);
+
+      rec.onresult = (event: any) => {
+        clearTimeout(timeout);
+        const transcript = event.results[0][0].transcript;
+        resolve(transcript);
+      };
+
+      rec.onerror = (event: any) => {
+        clearTimeout(timeout);
+        resolve(`Speech recognition error: ${event.error}`);
+      };
+
+      rec.onnomatch = () => {
+        clearTimeout(timeout);
+        resolve("No speech was recognized.");
+      };
+
+      rec.start();
+    });
+  },
+});
+
+/** Read from IndexedDB. */
+export const indexedDBRead = tool({
+  name: "indexedDBRead",
+  description:
+    "Read a value from browser IndexedDB by database name, store name, and key. " +
+    "IndexedDB is a structured NoSQL database built into the browser.",
+  parameters: JS.object({
+    dbName: JS.string("IndexedDB database name"),
+    storeName: JS.string("Object store (table) name"),
+    key: JS.string("Key to read"),
+  }, ["dbName", "storeName", "key"]),
+  execute: async ({ dbName, storeName, key }) => {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(dbName);
+      req.onerror = () => reject(req.error);
+      req.onsuccess = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(storeName)) {
+          resolve(`Store "${storeName}" not found in database "${dbName}".`);
+          return;
+        }
+        const tx = db.transaction(storeName, "readonly");
+        const store = tx.objectStore(storeName);
+        const getReq = store.get(key);
+        getReq.onsuccess = () => {
+          if (getReq.result === undefined) {
+            resolve(`Key "${key}" not found.`);
+          } else {
+            resolve(JSON.stringify(getReq.result, null, 2));
+          }
+        };
+        getReq.onerror = () => reject(getReq.error);
+      };
+    });
+  },
+});
+
+/** Write to IndexedDB. */
+export const indexedDBWrite = tool({
+  name: "indexedDBWrite",
+  description: "Write a JSON value to browser IndexedDB.",
+  parameters: JS.object({
+    dbName: JS.string("IndexedDB database name"),
+    storeName: JS.string("Object store name"),
+    key: JS.string("Key to write"),
+    value: JS.string("JSON value to store"),
+  }, ["dbName", "storeName", "key", "value"]),
+  execute: async ({ dbName, storeName, key, value }) => {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(dbName, 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(storeName)) {
+          db.createObjectStore(storeName);
+        }
+      };
+      req.onerror = () => reject(req.error);
+      req.onsuccess = () => {
+        const db = req.result;
+        const tx = db.transaction(storeName, "readwrite");
+        const store = tx.objectStore(storeName);
+        let parsed: any;
+        try {
+          parsed = JSON.parse(value);
+        } catch {
+          parsed = value;
+        }
+        const putReq = store.put(parsed, key);
+        putReq.onsuccess = () => resolve(`Stored "${key}" in ${dbName}.${storeName}.`);
+        putReq.onerror = () => reject(putReq.error);
+      };
+    });
+  },
+});
+
+/** List all keys in an IndexedDB store. */
+export const indexedDBList = tool({
+  name: "indexedDBList",
+  description: "List all keys in an IndexedDB object store.",
+  parameters: JS.object({
+    dbName: JS.string("IndexedDB database name"),
+    storeName: JS.string("Object store name"),
+  }, ["dbName", "storeName"]),
+  execute: async ({ dbName, storeName }) => {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(dbName);
+      req.onerror = () => reject(req.error);
+      req.onsuccess = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(storeName)) {
+          resolve(`Store "${storeName}" not found.`);
+          return;
+        }
+        const tx = db.transaction(storeName, "readonly");
+        const store = tx.objectStore(storeName);
+        const keysReq = store.getAllKeys();
+        keysReq.onsuccess = () => resolve(keysReq.result.join("\n") || "Store is empty.");
+        keysReq.onerror = () => reject(keysReq.error);
+      };
+    });
+  },
+});
+
 /** Read all browser cookies for the current page. */
 export const cookiesRead = tool({
   name: "cookiesRead",
@@ -646,6 +833,11 @@ export const allBrowserTools = [
   ...storageTools,
   cookiesRead,
   runJavaScript,
+  screenCapture,
+  speechRecognition,
+  indexedDBRead,
+  indexedDBWrite,
+  indexedDBList,
   ...mediaTools,
   ...networkTools,
   ...uiTools,

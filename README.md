@@ -219,8 +219,11 @@ new Agent({ model: "gpt-4o", apiKey: "...", baseURL: "https://my-proxy.com/v1" }
 
 **Design principles:**
 - **No backend**: Everything runs client-side. The only external call is to the LLM API.
-- **Thin but complete**: ~600 lines of TypeScript. No heavy dependencies.
+- **Thin but complete**: ~900 lines of TypeScript. Zero runtime dependencies.
 - **Streaming-first**: `agent.stream()` yields real-time events for building reactive UIs.
+- **SSE token streaming**: Words appear as the LLM generates them, not after a long pause.
+- **Persistent memory**: Conversations survive page reloads via IndexedDB.
+- **Metrics tracking**: Token count, estimated cost, latency — all visible in real-time.
 - **Browser-native**: Tools use real browser APIs, not headless browser proxies.
 
 ---
