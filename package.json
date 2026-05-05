@@ -2,6 +2,7 @@
   "name": "flyagent-js",
   "version": "0.1.0",
   "description": "Lightweight AI agent framework for browsers and Node.js",
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [

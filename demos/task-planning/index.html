@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Planning Demo — Markdown-First AI Agent</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warn: #ca8a04;
+      --gray: #6b7280;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --text-secondary: #64748b;
+      --radius: 10px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      text-align: center;
+      padding: 24px 0 12px;
+    }
+
+    header h1 {
+      font-size: 1.7rem;
+      margin: 0 0 4px;
+    }
+
+    header p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin: 0;
+    }
+
+    .badges {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      background: #e0e7ff;
+      color: #3730a3;
+    }
+
+    .badge.green { background: #d1fae5; color: #065f46; }
+    .badge.orange { background: #ffedd5; color: #9a3412; }
+    .badge.purple { background: #f3e8ff; color: #6b21a8; }
+
+    /* Setup Card */
+    .setup-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .setup-card label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .setup-card input[type="password"],
+    .setup-card input[type="text"] {
+      font-size: 14px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      min-width: 260px;
+      flex: 1;
+    }
+
+    .setup-card input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .setup-card button {
+      font-size: 14px;
+      padding: 8px 18px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      background: var(--primary);
+      color: white;
+      font-weight: 600;
+    }
+
+    .setup-card button:hover { background: var(--primary-hover); }
+    .setup-card button:disabled { background: #cbd5e1; cursor: not-allowed; }
+
+    .setup-card button.secondary {
+      background: var(--gray);
+    }
+
+    .setup-card .toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    /* Metrics Bar */
+    #metricsBar {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 10px;
+      min-height: 22px;
+    }
+
+    /* App Container */
+    .app-wrapper {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      min-height: 300px;
+      position: relative;
+    }
+
+    #loading {
+      display: none;
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      font-size: 0.85rem;
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    #loading::after {
+      content: '';
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid var(--primary);
+      border-top-color: transparent;
+      border-radius: 50%;
+      margin-left: 8px;
+      animation: spin 0.8s linear infinite;
+      vertical-align: middle;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Markdown UI Widget Styles */
+    .mdui-widget {
+      margin: 12px 0;
+    }
+
+    .mdui-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    /* Button Group */
+    .mdui-button-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .mdui-button-group button {
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: white;
+      cursor: pointer;
+      font-size: 0.88rem;
+      transition: all 0.15s;
+    }
+
+    .mdui-button-group button:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .mdui-button-group button.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    /* Select */
+    .mdui-select {
+      font-size: 14px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: white;
+      min-width: 160px;
+    }
+
+    /* Slider */
+    .mdui-slider-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .mdui-slider {
+      flex: 1;
+      accent-color: var(--primary);
+    }
+
+    .mdui-slider-value {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--primary);
+      min-width: 36px;
+      text-align: right;
+    }
+
+    /* Text Input */
+    .mdui-text-input {
+      font-size: 14px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    /* Form */
+    .mdui-form {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      background: #f8fafc;
+    }
+
+    .mdui-submit-btn {
+      margin-top: 12px;
+      padding: 8px 20px;
+      background: var(--success);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .mdui-submit-btn:hover { opacity: 0.9; }
+
+    /* Charts */
+    .mdui-chart-wrapper {
+      margin: 16px 0;
+    }
+
+    .mdui-chart-title {
+      font-size: 1rem;
+      margin: 0 0 8px;
+      color: var(--text);
+    }
+
+    .mdui-chart {
+      max-height: 320px;
+    }
+
+    /* Event Log */
+    .event-log {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-top: 16px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .event-log-header {
+      padding: 10px 14px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .event-log-header button {
+      font-size: 0.72rem;
+      padding: 3px 10px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: white;
+      cursor: pointer;
+    }
+
+    #eventLog {
+      padding: 8px 14px;
+      font-size: 0.8rem;
+      font-family: ui-monospace, SFMono-Regular, monospace;
+    }
+
+    .log-line {
+      padding: 2px 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .log-line:last-child { border-bottom: none; }
+    .log-info { color: var(--text); }
+    .log-tool { color: var(--warn); }
+    .log-error { color: var(--danger); font-weight: 600; }
+
+    /* Markdown base styles */
+    #app h1 { font-size: 1.4rem; margin-top: 0; }
+    #app h2 { font-size: 1.2rem; margin-top: 20px; }
+    #app h3 { font-size: 1.05rem; }
+    #app p { margin: 8px 0; }
+    #app ul { padding-left: 20px; }
+    #app li { margin: 3px 0; }
+    #app hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+    #app strong { color: var(--text); }
+    #app code {
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    #app pre {
+      background: #f1f5f9;
+      padding: 12px;
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+    #app pre code { background: none; padding: 0; }
+    #app table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 12px 0;
+      font-size: 0.9rem;
+    }
+    #app th, #app td {
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+      text-align: left;
+    }
+    #app th { background: #f8fafc; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎯 Task Planning Demo</h1>
+      <p>AI-generated interactive UI — zero traditional frontend code</p>
+      <div class="badges">
+        <span class="badge purple">Kimi LLM</span>
+        <span class="badge green">Markdown UI</span>
+        <span class="badge orange">flyagent-js</span>
+        <span class="badge">Zero Framework</span>
+      </div>
+    </header>
+
+    <div class="setup-card">
+      <label for="apiKey">🔑 Kimi API Key</label>
+      <input type="password" id="apiKey" placeholder="sk-..." />
+      <label class="toggle">
+        <input type="checkbox" id="enableStreaming" checked />
+        Streaming
+      </label>
+      <button id="runBtn">▶ Start</button>
+      <button class="secondary" id="resetBtn">↺ Reset</button>
+    </div>
+
+    <div id="metricsBar"></div>
+
+    <div class="app-wrapper">
+      <div id="loading">Agent is thinking...</div>
+      <div id="app"></div>
+    </div>
+
+    <div class="event-log">
+      <div class="event-log-header">
+        <span>📝 Event Log</span>
+        <button onclick="document.getElementById('eventLog').innerHTML=''">Clear</button>
+      </div>
+      <div id="eventLog"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { bootstrap } from './app.js';
+    bootstrap();
+  </script>
+</body>
+</html>

@@ -1,14 +1,9 @@
-"use strict";
 /**
  * LLM Provider — OpenAI/Anthropic API client using fetch.
  * Works in both browser and Node.js (with fetch polyfill).
  */
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.OpenAIClient = void 0;
-exports.detectProvider = detectProvider;
-exports.streamChat = streamChat;
 /** Detect provider from model name. */
-function detectProvider(model) {
+export function detectProvider(model) {
     const m = model.toLowerCase();
     if (m.startsWith("claude"))
         return "anthropic";
@@ -18,7 +13,7 @@ function detectProvider(model) {
         return "kimi";
     return "openai";
 }
-async function* streamChat(config, messages, tools, jsonOutput = false) {
+export async function* streamChat(config, messages, tools, jsonOutput = false) {
     const baseURL = config.baseURL || "https://api.openai.com/v1";
     const url = `${baseURL}/chat/completions`;
     const body = {
@@ -142,7 +137,7 @@ function toOpenAIMessage(msg) {
 function isVisionModel(model) {
     return model.includes("gpt-4o") || model.includes("claude-3");
 }
-class OpenAIClient {
+export class OpenAIClient {
     constructor(config) {
         this.config = {
             temperature: 0.7,
@@ -244,4 +239,3 @@ class OpenAIClient {
         };
     }
 }
-exports.OpenAIClient = OpenAIClient;

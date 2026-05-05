@@ -1,4 +1,3 @@
-"use strict";
 /**
  * Agent — The core orchestrator.
  *
@@ -12,14 +11,12 @@
  *   - Cross-tab sync via BroadcastChannel
  *   - Real-time event streaming
  */
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.Agent = void 0;
-const llm_js_1 = require("./llm.js");
-class Agent {
+import { OpenAIClient, detectProvider, streamChat } from "./llm.js";
+export class Agent {
     constructor(config) {
         this.messages = [];
         // Auto-detect provider from model name and set defaults
-        const provider = (0, llm_js_1.detectProvider)(config.model);
+        const provider = detectProvider(config.model);
         let apiKey = config.apiKey;
         let baseURL = config.baseURL;
         if (provider === "gemini") {
@@ -40,7 +37,7 @@ class Agent {
             temperature: config.temperature ?? 0.7,
             maxTokens: config.maxTokens ?? 4096,
         };
-        this.llm = new llm_js_1.OpenAIClient(this._config);
+        this.llm = new OpenAIClient(this._config);
         this.tools = new Map();
         this.system = config.system || "You are a helpful AI assistant.";
         this.maxIterations = config.maxIterations ?? 30;
@@ -162,7 +159,7 @@ class Agent {
                     // Stream tokens in real-time
                     let fullContent = "";
                     let finalToolCalls = [];
-                    for await (const chunk of (0, llm_js_1.streamChat)(this._config, this.messages, toolSchemas, options.jsonOutput)) {
+                    for await (const chunk of streamChat(this._config, this.messages, toolSchemas, options.jsonOutput)) {
                         if (chunk.content) {
                             fullContent += chunk.content;
                             yield { type: "token", text: chunk.content };
@@ -283,7 +280,6 @@ class Agent {
         return (promptTokens * 0.15 + completionTokens * 0.6) / 1000000;
     }
 }
-exports.Agent = Agent;
 /** Safely read env vars in both Node.js and browser. */
 function _env(key) {
     try {

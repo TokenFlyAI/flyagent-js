@@ -1,4 +1,3 @@
-"use strict";
 /**
  * Persistent memory for browser agents.
  *
@@ -11,12 +10,10 @@
  *   await memory.save(sessionId, { messages, metadata });
  *   const session = await memory.load(sessionId);
  */
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.AgentMemory = void 0;
 const DB_NAME = "flyagent-memory";
 const DB_VERSION = 1;
 const STORE_NAME = "sessions";
-class AgentMemory {
+export class AgentMemory {
     constructor(namespace = "default") {
         this.db = null;
         this.namespace = namespace;
@@ -114,4 +111,3 @@ class AgentMemory {
         });
     }
 }
-exports.AgentMemory = AgentMemory;

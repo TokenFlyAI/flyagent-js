@@ -1,11 +1,8 @@
-"use strict";
 /**
  * Lightweight JSON Schema builder.
  * Mirrors flyagent.core.schema.JS from the Python framework.
  */
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.JS = void 0;
-exports.JS = {
+export const JS = {
     string(description = "", options = {}) {
         const s = { type: "string" };
         if (description)

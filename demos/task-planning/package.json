@@ -1,0 +1,13 @@
+{
+  "name": "flyagent-task-planning-demo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

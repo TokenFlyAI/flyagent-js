@@ -1,4 +1,3 @@
-"use strict";
 /**
  * Built-in browser tools for flyagent-js.
  *
@@ -16,20 +15,18 @@
  *     tools: [domQuery, clipboardRead, cameraCapture],
  *   });
  */
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.allBrowserTools = exports.uiTools = exports.networkTools = exports.mediaTools = exports.storageTools = exports.domTools = exports.getDeviceInfo = exports.readFile = exports.downloadFile = exports.shareContent = exports.showNotification = exports.speak = exports.getGeolocation = exports.cameraCapture = exports.clipboardWrite = exports.clipboardRead = exports.httpFetch = exports.runJavaScript = exports.cookiesRead = exports.indexedDBList = exports.indexedDBWrite = exports.indexedDBRead = exports.speechRecognition = exports.screenCapture = exports.localStorageList = exports.localStorageWrite = exports.localStorageRead = exports.getPageInfo = exports.domSet = exports.domScroll = exports.domClick = exports.domQuery = void 0;
-const tool_js_1 = require("./tool.js");
+import { tool, JS } from "./tool.js";
 // ── DOM Tools ─────────────────────────────────────────────────────────────
 /** Query DOM elements and return their text content or attributes. */
-exports.domQuery = (0, tool_js_1.tool)({
+export const domQuery = tool({
     name: "domQuery",
     description: "Query DOM elements by CSS selector. Returns text content, attributes, or HTML. " +
         "Use this to read page content, find buttons, forms, or any element.",
-    parameters: tool_js_1.JS.object({
-        selector: tool_js_1.JS.string("CSS selector, e.g., 'h1', '.class', '#id', 'button[type=submit]'"),
-        mode: tool_js_1.JS.string("What to extract: 'text' | 'html' | 'value' | 'attribute'"),
-        attribute: tool_js_1.JS.string("If mode='attribute', which attribute to read (e.g., 'href', 'src')"),
-        limit: tool_js_1.JS.integer("Max number of elements to return (default: 10)"),
+    parameters: JS.object({
+        selector: JS.string("CSS selector, e.g., 'h1', '.class', '#id', 'button[type=submit]'"),
+        mode: JS.string("What to extract: 'text' | 'html' | 'value' | 'attribute'"),
+        attribute: JS.string("If mode='attribute', which attribute to read (e.g., 'href', 'src')"),
+        limit: JS.integer("Max number of elements to return (default: 10)"),
     }, ["selector"]),
     execute: ({ selector, mode = "text", attribute, limit = 10 }) => {
         const elements = Array.from(document.querySelectorAll(selector)).slice(0, limit);
@@ -55,11 +52,11 @@ exports.domQuery = (0, tool_js_1.tool)({
     },
 });
 /** Click on a DOM element. */
-exports.domClick = (0, tool_js_1.tool)({
+export const domClick = tool({
     name: "domClick",
     description: "Click on a DOM element by CSS selector. Useful for pressing buttons, expanding menus, etc.",
-    parameters: tool_js_1.JS.object({
-        selector: tool_js_1.JS.string("CSS selector of element to click"),
+    parameters: JS.object({
+        selector: JS.string("CSS selector of element to click"),
     }, ["selector"]),
     execute: ({ selector }) => {
         const el = document.querySelector(selector);
@@ -70,12 +67,12 @@ exports.domClick = (0, tool_js_1.tool)({
     },
 });
 /** Scroll to a DOM element. */
-exports.domScroll = (0, tool_js_1.tool)({
+export const domScroll = tool({
     name: "domScroll",
     description: "Scroll the page to bring an element into view.",
-    parameters: tool_js_1.JS.object({
-        selector: tool_js_1.JS.string("CSS selector of element to scroll to"),
-        behavior: tool_js_1.JS.string("Scroll behavior: 'smooth' | 'auto' (default: smooth)"),
+    parameters: JS.object({
+        selector: JS.string("CSS selector of element to scroll to"),
+        behavior: JS.string("Scroll behavior: 'smooth' | 'auto' (default: smooth)"),
     }, ["selector"]),
     execute: ({ selector, behavior = "smooth" }) => {
         const el = document.querySelector(selector);
@@ -86,15 +83,15 @@ exports.domScroll = (0, tool_js_1.tool)({
     },
 });
 /** Set text content or attribute of a DOM element. */
-exports.domSet = (0, tool_js_1.tool)({
+export const domSet = tool({
     name: "domSet",
     description: "Modify a DOM element: set its text content, innerHTML, value, or an attribute. " +
         "Useful for filling forms, updating UI, or injecting content.",
-    parameters: tool_js_1.JS.object({
-        selector: tool_js_1.JS.string("CSS selector of element to modify"),
-        mode: tool_js_1.JS.string("What to set: 'text' | 'html' | 'value' | 'attribute'"),
-        value: tool_js_1.JS.string("Value to set"),
-        attribute: tool_js_1.JS.string("If mode='attribute', which attribute to set"),
+    parameters: JS.object({
+        selector: JS.string("CSS selector of element to modify"),
+        mode: JS.string("What to set: 'text' | 'html' | 'value' | 'attribute'"),
+        value: JS.string("Value to set"),
+        attribute: JS.string("If mode='attribute', which attribute to set"),
     }, ["selector", "mode", "value"]),
     execute: ({ selector, mode, value, attribute }) => {
         const el = document.querySelector(selector);
@@ -121,10 +118,10 @@ exports.domSet = (0, tool_js_1.tool)({
     },
 });
 /** Get current page metadata. */
-exports.getPageInfo = (0, tool_js_1.tool)({
+export const getPageInfo = tool({
     name: "getPageInfo",
     description: "Get current page URL, title, meta description, viewport size, and scroll position.",
-    parameters: tool_js_1.JS.object(),
+    parameters: JS.object(),
     execute: () => ({
         url: window.location.href,
         title: document.title,
@@ -137,11 +134,11 @@ exports.getPageInfo = (0, tool_js_1.tool)({
 });
 // ── Storage Tools ─────────────────────────────────────────────────────────
 /** Read from localStorage. */
-exports.localStorageRead = (0, tool_js_1.tool)({
+export const localStorageRead = tool({
     name: "localStorageRead",
     description: "Read a value from browser localStorage by key.",
-    parameters: tool_js_1.JS.object({
-        key: tool_js_1.JS.string("localStorage key to read"),
+    parameters: JS.object({
+        key: JS.string("localStorage key to read"),
     }, ["key"]),
     execute: ({ key }) => {
         try {
@@ -154,12 +151,12 @@ exports.localStorageRead = (0, tool_js_1.tool)({
     },
 });
 /** Write to localStorage. */
-exports.localStorageWrite = (0, tool_js_1.tool)({
+export const localStorageWrite = tool({
     name: "localStorageWrite",
     description: "Write a value to browser localStorage by key.",
-    parameters: tool_js_1.JS.object({
-        key: tool_js_1.JS.string("localStorage key to write"),
-        value: tool_js_1.JS.string("Value to store"),
+    parameters: JS.object({
+        key: JS.string("localStorage key to write"),
+        value: JS.string("Value to store"),
     }, ["key", "value"]),
     execute: ({ key, value }) => {
         try {
@@ -172,10 +169,10 @@ exports.localStorageWrite = (0, tool_js_1.tool)({
     },
 });
 /** List all localStorage keys. */
-exports.localStorageList = (0, tool_js_1.tool)({
+export const localStorageList = tool({
     name: "localStorageList",
     description: "List all keys in browser localStorage.",
-    parameters: tool_js_1.JS.object(),
+    parameters: JS.object(),
     execute: () => {
         const keys = [];
         for (let i = 0; i < localStorage.length; i++) {
@@ -187,12 +184,12 @@ exports.localStorageList = (0, tool_js_1.tool)({
     },
 });
 /** Capture the screen or a specific application window. */
-exports.screenCapture = (0, tool_js_1.tool)({
+export const screenCapture = tool({
     name: "screenCapture",
     description: "Capture a screenshot of the user's screen, a specific window, or a browser tab. " +
         "The user will be prompted to select what to share. Returns a base64 data URL.",
-    parameters: tool_js_1.JS.object({
-        displaySurface: tool_js_1.JS.string("What to capture: 'monitor' (full screen) | 'window' | 'browser'. Default: monitor"),
+    parameters: JS.object({
+        displaySurface: JS.string("What to capture: 'monitor' (full screen) | 'window' | 'browser'. Default: monitor"),
     }),
     execute: async ({ displaySurface = "monitor" }) => {
         try {
@@ -219,14 +216,14 @@ exports.screenCapture = (0, tool_js_1.tool)({
     },
 });
 /** Continuous speech recognition. */
-exports.speechRecognition = (0, tool_js_1.tool)({
+export const speechRecognition = tool({
     name: "speechRecognition",
     description: "Listen to the user's voice and transcribe speech to text. " +
         "The user must grant microphone permission. " +
         "Listens for a single utterance and returns the transcript.",
-    parameters: tool_js_1.JS.object({
-        lang: tool_js_1.JS.string("Language code, e.g., 'en-US', 'zh-CN'. Default: browser language"),
-        maxDuration: tool_js_1.JS.integer("Max listening duration in seconds (default: 30)"),
+    parameters: JS.object({
+        lang: JS.string("Language code, e.g., 'en-US', 'zh-CN'. Default: browser language"),
+        maxDuration: JS.integer("Max listening duration in seconds (default: 30)"),
     }),
     execute: async ({ lang, maxDuration = 30 }) => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -259,14 +256,14 @@ exports.speechRecognition = (0, tool_js_1.tool)({
     },
 });
 /** Read from IndexedDB. */
-exports.indexedDBRead = (0, tool_js_1.tool)({
+export const indexedDBRead = tool({
     name: "indexedDBRead",
     description: "Read a value from browser IndexedDB by database name, store name, and key. " +
         "IndexedDB is a structured NoSQL database built into the browser.",
-    parameters: tool_js_1.JS.object({
-        dbName: tool_js_1.JS.string("IndexedDB database name"),
-        storeName: tool_js_1.JS.string("Object store (table) name"),
-        key: tool_js_1.JS.string("Key to read"),
+    parameters: JS.object({
+        dbName: JS.string("IndexedDB database name"),
+        storeName: JS.string("Object store (table) name"),
+        key: JS.string("Key to read"),
     }, ["dbName", "storeName", "key"]),
     execute: async ({ dbName, storeName, key }) => {
         return new Promise((resolve, reject) => {
@@ -295,14 +292,14 @@ exports.indexedDBRead = (0, tool_js_1.tool)({
     },
 });
 /** Write to IndexedDB. */
-exports.indexedDBWrite = (0, tool_js_1.tool)({
+export const indexedDBWrite = tool({
     name: "indexedDBWrite",
     description: "Write a JSON value to browser IndexedDB.",
-    parameters: tool_js_1.JS.object({
-        dbName: tool_js_1.JS.string("IndexedDB database name"),
-        storeName: tool_js_1.JS.string("Object store name"),
-        key: tool_js_1.JS.string("Key to write"),
-        value: tool_js_1.JS.string("JSON value to store"),
+    parameters: JS.object({
+        dbName: JS.string("IndexedDB database name"),
+        storeName: JS.string("Object store name"),
+        key: JS.string("Key to write"),
+        value: JS.string("JSON value to store"),
     }, ["dbName", "storeName", "key", "value"]),
     execute: async ({ dbName, storeName, key, value }) => {
         return new Promise((resolve, reject) => {
@@ -333,12 +330,12 @@ exports.indexedDBWrite = (0, tool_js_1.tool)({
     },
 });
 /** List all keys in an IndexedDB store. */
-exports.indexedDBList = (0, tool_js_1.tool)({
+export const indexedDBList = tool({
     name: "indexedDBList",
     description: "List all keys in an IndexedDB object store.",
-    parameters: tool_js_1.JS.object({
-        dbName: tool_js_1.JS.string("IndexedDB database name"),
-        storeName: tool_js_1.JS.string("Object store name"),
+    parameters: JS.object({
+        dbName: JS.string("IndexedDB database name"),
+        storeName: JS.string("Object store name"),
     }, ["dbName", "storeName"]),
     execute: async ({ dbName, storeName }) => {
         return new Promise((resolve, reject) => {
@@ -360,11 +357,11 @@ exports.indexedDBList = (0, tool_js_1.tool)({
     },
 });
 /** Read all browser cookies for the current page. */
-exports.cookiesRead = (0, tool_js_1.tool)({
+export const cookiesRead = tool({
     name: "cookiesRead",
     description: "Read all cookies for the current document. Returns key-value pairs. " +
         "Only cookies accessible to JavaScript (not HttpOnly) are returned.",
-    parameters: tool_js_1.JS.object(),
+    parameters: JS.object(),
     execute: () => {
         const raw = document.cookie;
         if (!raw)
@@ -391,7 +388,7 @@ exports.cookiesRead = (0, tool_js_1.tool)({
  *   const headings = document.querySelectorAll('h1');
  *   return Array.from(headings).map(h => h.textContent);
  */
-exports.runJavaScript = (0, tool_js_1.tool)({
+export const runJavaScript = tool({
     name: "runJavaScript",
     description: "Write and execute JavaScript code directly in the browser. " +
         "This is the most powerful tool — the code runs with full access to the page, " +
@@ -400,9 +397,9 @@ exports.runJavaScript = (0, tool_js_1.tool)({
         "Use this for: complex DOM manipulation, calculations, data transformation, " +
         "batch operations, or anything the other tools can't do. " +
         "Example: `const data = JSON.parse(localStorage.getItem('user')); return data.name;`",
-    parameters: tool_js_1.JS.object({
-        code: tool_js_1.JS.string("JavaScript code to execute. Use `return` for the final result."),
-        timeout: tool_js_1.JS.integer("Max execution time in ms (default: 5000)"),
+    parameters: JS.object({
+        code: JS.string("JavaScript code to execute. Use `return` for the final result."),
+        timeout: JS.integer("Max execution time in ms (default: 5000)"),
     }, ["code"]),
     execute: ({ code, timeout = 5000 }) => {
         return new Promise((resolve) => {
@@ -440,15 +437,15 @@ exports.runJavaScript = (0, tool_js_1.tool)({
 });
 // ── Network Tools ─────────────────────────────────────────────────────────
 /** Make an HTTP fetch request from the browser. */
-exports.httpFetch = (0, tool_js_1.tool)({
+export const httpFetch = tool({
     name: "httpFetch",
     description: "Make an HTTP request from the browser. Use this to call external APIs, " +
         "fetch data, or check website availability. Respects CORS.",
-    parameters: tool_js_1.JS.object({
-        url: tool_js_1.JS.string("URL to fetch"),
-        method: tool_js_1.JS.string("HTTP method: GET | POST | PUT | DELETE (default: GET)"),
-        headers: tool_js_1.JS.object({}, [], "Optional headers as JSON object"),
-        body: tool_js_1.JS.string("Optional request body (for POST/PUT)"),
+    parameters: JS.object({
+        url: JS.string("URL to fetch"),
+        method: JS.string("HTTP method: GET | POST | PUT | DELETE (default: GET)"),
+        headers: JS.object({}, [], "Optional headers as JSON object"),
+        body: JS.string("Optional request body (for POST/PUT)"),
     }, ["url"]),
     execute: async ({ url, method = "GET", headers, body }) => {
         try {
@@ -472,11 +469,11 @@ exports.httpFetch = (0, tool_js_1.tool)({
 });
 // ── Clipboard Tools ───────────────────────────────────────────────────────
 /** Read text from clipboard. */
-exports.clipboardRead = (0, tool_js_1.tool)({
+export const clipboardRead = tool({
     name: "clipboardRead",
     description: "Read text from the system clipboard. Requires user permission in most browsers. " +
         "Only works in secure contexts (HTTPS or localhost).",
-    parameters: tool_js_1.JS.object(),
+    parameters: JS.object(),
     execute: async () => {
         try {
             const text = await navigator.clipboard.readText();
@@ -488,11 +485,11 @@ exports.clipboardRead = (0, tool_js_1.tool)({
     },
 });
 /** Write text to clipboard. */
-exports.clipboardWrite = (0, tool_js_1.tool)({
+export const clipboardWrite = tool({
     name: "clipboardWrite",
     description: "Write text to the system clipboard.",
-    parameters: tool_js_1.JS.object({
-        text: tool_js_1.JS.string("Text to copy to clipboard"),
+    parameters: JS.object({
+        text: JS.string("Text to copy to clipboard"),
     }, ["text"]),
     execute: async ({ text }) => {
         try {
@@ -506,12 +503,12 @@ exports.clipboardWrite = (0, tool_js_1.tool)({
 });
 // ── Media / Input Tools ───────────────────────────────────────────────────
 /** Capture a photo from the user's camera. */
-exports.cameraCapture = (0, tool_js_1.tool)({
+export const cameraCapture = tool({
     name: "cameraCapture",
     description: "Take a photo using the device's camera and return it as a base64 data URL. " +
         "Useful for visual analysis, QR scanning, or documenting something.",
-    parameters: tool_js_1.JS.object({
-        facingMode: tool_js_1.JS.string("Camera to use: 'user' (front) | 'environment' (back). Default: environment"),
+    parameters: JS.object({
+        facingMode: JS.string("Camera to use: 'user' (front) | 'environment' (back). Default: environment"),
     }),
     execute: async ({ facingMode = "environment" }) => {
         try {
@@ -536,12 +533,12 @@ exports.cameraCapture = (0, tool_js_1.tool)({
     },
 });
 /** Get device geolocation (GPS coordinates). */
-exports.getGeolocation = (0, tool_js_1.tool)({
+export const getGeolocation = tool({
     name: "getGeolocation",
     description: "Get the device's current GPS coordinates. Requires user permission. " +
         "Returns latitude, longitude, and accuracy.",
-    parameters: tool_js_1.JS.object({
-        enableHighAccuracy: tool_js_1.JS.boolean("Request high-accuracy GPS (default: true)"),
+    parameters: JS.object({
+        enableHighAccuracy: JS.boolean("Request high-accuracy GPS (default: true)"),
     }),
     execute: async ({ enableHighAccuracy = true }) => {
         return new Promise((resolve) => {
@@ -561,13 +558,13 @@ exports.getGeolocation = (0, tool_js_1.tool)({
     },
 });
 /** Use browser's text-to-speech to speak a message. */
-exports.speak = (0, tool_js_1.tool)({
+export const speak = tool({
     name: "speak",
     description: "Speak text aloud using the browser's text-to-speech engine.",
-    parameters: tool_js_1.JS.object({
-        text: tool_js_1.JS.string("Text to speak"),
-        lang: tool_js_1.JS.string("Language code, e.g., 'en-US', 'zh-CN'. Default: browser language"),
-        rate: tool_js_1.JS.number("Speech rate: 0.1 (slow) to 10 (fast). Default: 1"),
+    parameters: JS.object({
+        text: JS.string("Text to speak"),
+        lang: JS.string("Language code, e.g., 'en-US', 'zh-CN'. Default: browser language"),
+        rate: JS.number("Speech rate: 0.1 (slow) to 10 (fast). Default: 1"),
     }, ["text"]),
     execute: ({ text, lang, rate = 1 }) => {
         if (!window.speechSynthesis)
@@ -582,13 +579,13 @@ exports.speak = (0, tool_js_1.tool)({
 });
 // ── UI / System Tools ─────────────────────────────────────────────────────
 /** Show a browser notification. */
-exports.showNotification = (0, tool_js_1.tool)({
+export const showNotification = tool({
     name: "showNotification",
     description: "Display a native browser notification. Requires user permission. " +
         "The page may need to be in focus or have notification permission granted.",
-    parameters: tool_js_1.JS.object({
-        title: tool_js_1.JS.string("Notification title"),
-        body: tool_js_1.JS.string("Notification body text"),
+    parameters: JS.object({
+        title: JS.string("Notification title"),
+        body: JS.string("Notification body text"),
     }, ["title", "body"]),
     execute: async ({ title, body }) => {
         if (!("Notification" in window))
@@ -601,14 +598,14 @@ exports.showNotification = (0, tool_js_1.tool)({
     },
 });
 /** Use the native Web Share API to share content. */
-exports.shareContent = (0, tool_js_1.tool)({
+export const shareContent = tool({
     name: "shareContent",
     description: "Open the device's native share dialog (mobile) or copy link (desktop). " +
         "Useful for sharing results, URLs, or generated content.",
-    parameters: tool_js_1.JS.object({
-        title: tool_js_1.JS.string("Share title"),
-        text: tool_js_1.JS.string("Share text/body"),
-        url: tool_js_1.JS.string("URL to share"),
+    parameters: JS.object({
+        title: JS.string("Share title"),
+        text: JS.string("Share text/body"),
+        url: JS.string("URL to share"),
     }, ["title", "text"]),
     execute: async ({ title, text, url }) => {
         if (!("share" in navigator))
@@ -623,14 +620,14 @@ exports.shareContent = (0, tool_js_1.tool)({
     },
 });
 /** Download a file to the user's device. */
-exports.downloadFile = (0, tool_js_1.tool)({
+export const downloadFile = tool({
     name: "downloadFile",
     description: "Create and download a file to the user's device. Useful for exporting " +
         "reports, CSVs, JSON data, or generated documents.",
-    parameters: tool_js_1.JS.object({
-        filename: tool_js_1.JS.string("Name of file to download, e.g., 'report.txt'"),
-        content: tool_js_1.JS.string("File content (text)"),
-        mimeType: tool_js_1.JS.string("MIME type, e.g., 'text/plain', 'application/json'. Default: text/plain"),
+    parameters: JS.object({
+        filename: JS.string("Name of file to download, e.g., 'report.txt'"),
+        content: JS.string("File content (text)"),
+        mimeType: JS.string("MIME type, e.g., 'text/plain', 'application/json'. Default: text/plain"),
     }, ["filename", "content"]),
     execute: ({ filename, content, mimeType = "text/plain" }) => {
         const blob = new Blob([content], { type: mimeType });
@@ -646,13 +643,13 @@ exports.downloadFile = (0, tool_js_1.tool)({
     },
 });
 /** Read a user-selected file. */
-exports.readFile = (0, tool_js_1.tool)({
+export const readFile = tool({
     name: "readFile",
     description: "Prompt the user to select a file and read its contents as text or base64. " +
         "Useful for uploading documents, images, or data files for analysis.",
-    parameters: tool_js_1.JS.object({
-        accept: tool_js_1.JS.string("File type filter, e.g., '.txt,.json' or 'image/*'"),
-        asBase64: tool_js_1.JS.boolean("Return file as base64 instead of text (useful for images). Default: false"),
+    parameters: JS.object({
+        accept: JS.string("File type filter, e.g., '.txt,.json' or 'image/*'"),
+        asBase64: JS.boolean("Return file as base64 instead of text (useful for images). Default: false"),
     }),
     execute: async ({ accept, asBase64 = false }) => {
         return new Promise((resolve) => {
@@ -684,11 +681,11 @@ exports.readFile = (0, tool_js_1.tool)({
     },
 });
 /** Get browser and device info. */
-exports.getDeviceInfo = (0, tool_js_1.tool)({
+export const getDeviceInfo = tool({
     name: "getDeviceInfo",
     description: "Get device and browser information: screen size, memory, cores, " +
         "online status, battery, and network type.",
-    parameters: tool_js_1.JS.object(),
+    parameters: JS.object(),
     execute: async () => {
         const info = {
             screen: { width: screen.width, height: screen.height, colorDepth: screen.colorDepth },
@@ -728,27 +725,27 @@ exports.getDeviceInfo = (0, tool_js_1.tool)({
 });
 // ── Convenience bundles ───────────────────────────────────────────────────
 /** All DOM-related tools. */
-exports.domTools = [exports.domQuery, exports.domClick, exports.domScroll, exports.domSet, exports.getPageInfo];
+export const domTools = [domQuery, domClick, domScroll, domSet, getPageInfo];
 /** All storage tools. */
-exports.storageTools = [exports.localStorageRead, exports.localStorageWrite, exports.localStorageList];
+export const storageTools = [localStorageRead, localStorageWrite, localStorageList];
 /** All media/input tools. */
-exports.mediaTools = [exports.clipboardRead, exports.clipboardWrite, exports.cameraCapture, exports.getGeolocation, exports.speak];
+export const mediaTools = [clipboardRead, clipboardWrite, cameraCapture, getGeolocation, speak];
 /** All network tools. */
-exports.networkTools = [exports.httpFetch];
+export const networkTools = [httpFetch];
 /** All UI/system tools. */
-exports.uiTools = [exports.showNotification, exports.shareContent, exports.downloadFile, exports.readFile, exports.getDeviceInfo];
+export const uiTools = [showNotification, shareContent, downloadFile, readFile, getDeviceInfo];
 /** Every built-in browser tool. */
-exports.allBrowserTools = [
-    ...exports.domTools,
-    ...exports.storageTools,
-    exports.cookiesRead,
-    exports.runJavaScript,
-    exports.screenCapture,
-    exports.speechRecognition,
-    exports.indexedDBRead,
-    exports.indexedDBWrite,
-    exports.indexedDBList,
-    ...exports.mediaTools,
-    ...exports.networkTools,
-    ...exports.uiTools,
+export const allBrowserTools = [
+    ...domTools,
+    ...storageTools,
+    cookiesRead,
+    runJavaScript,
+    screenCapture,
+    speechRecognition,
+    indexedDBRead,
+    indexedDBWrite,
+    indexedDBList,
+    ...mediaTools,
+    ...networkTools,
+    ...uiTools,
 ];
