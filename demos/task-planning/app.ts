@@ -263,6 +263,7 @@ async function initAgent(): Promise<void> {
   state.agent = new Agent({
     model: DEMO_CONFIG.model,
     apiKey,
+    baseURL: DEMO_CONFIG.baseURL,
     tools: [...allBrowserTools, savePlanTool, loadPlanTool],
     system: SYSTEM_PROMPT,
     maxIterations: DEMO_CONFIG.maxIterations,

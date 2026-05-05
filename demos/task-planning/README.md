@@ -43,23 +43,39 @@ Just:
 
 ### 1. Get a Kimi API Key
 
-Sign up at [platform.moonshot.cn](https://platform.moonshot.cn) and create an API key.
+**Important:** You need a **Moonshot Open Platform** key (starts with `sk-`).
 
-### 2. Build flyagent-js (if not already built)
+- Sign up at [platform.moonshot.cn](https://platform.moonshot.cn)
+- Create an API key — it starts with `sk-` (NOT `sk-kimi-`)
+
+⚠️ Keys from [kimi.com/code/console](https://www.kimi.com/code/console) (prefix `sk-kimi-`) are **restricted to approved coding agents only** (Claude Code, Roo Code, etc.) and will **NOT work** in this browser demo.
+
+### 2. Add your API key to config
+
+Edit `config.ts` and paste your key:
+
+```typescript
+export const DEMO_CONFIG = {
+  apiKey: 'sk-your-key-here',
+  // ...
+};
+```
+
+### 3. Build flyagent-js (if not already built)
 
 ```bash
 cd ../..
 npm run build
 ```
 
-### 3. Build the demo
+### 4. Build the demo
 
 ```bash
 cd demos/task-planning
 npm run build
 ```
 
-### 4. Open in browser
+### 5. Open in browser
 
 ```bash
 # Using Python's built-in server
@@ -71,7 +87,9 @@ npx serve .
 
 Then open `http://localhost:8080` in your browser.
 
-### 5. Enter your API key and click **Start**
+### 6. Click **Start**
+
+The API key is pre-filled from `config.ts`. Just click **Start**.
 
 ---
 
